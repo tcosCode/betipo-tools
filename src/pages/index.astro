@@ -1,10 +1,10 @@
 ---
 import Layout from "../layouts/Layout.astro";
-import FormationGrid from "../components/FormationGrid";
+import DashboardTabs from "../components/DashboardTabs";
 ---
 
 <Layout>
   <div class="mx-auto max-w-[1200px] px-4 py-10">
-    <FormationGrid client:load initialFormations={[]} />
+    <DashboardTabs client:load />
   </div>
 </Layout>
