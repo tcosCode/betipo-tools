@@ -9,28 +9,34 @@ export default function MaintenanceToggle() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    const fetchMaintenanceStatus = async () => {
+      setIsLoading(true);
+      setError(null);
+      try {
+        const response = await fetch(
+          `/api/configuracion/mantenimiento?env=${env}`,
+        );
+        if (!response.ok) throw new Error("Error al cargar la configuración");
+        const data = await response.json();
+        setIsMaintenanceMode(data.en_mantenimiento);
+      } catch (err) {
+        setError(
+          err instanceof Error
+            ? err.message
+            : "Error al cargar la configuración",
+        );
+        Swal.fire({
+          icon: "error",
+          title: "Error",
+          text: "Error al cargar la configuración de mantenimiento",
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
     fetchMaintenanceStatus();
   }, [env]);
-
-  const fetchMaintenanceStatus = async () => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const response = await fetch(`/api/configuracion/mantenimiento?env=${env}`);
-      if (!response.ok) throw new Error("Error al cargar la configuración");
-      const data = await response.json();
-      setIsMaintenanceMode(data.en_mantenimiento);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Error al cargar la configuración");
-      Swal.fire({
-        icon: "error",
-        title: "Error",
-        text: "Error al cargar la configuración de mantenimiento",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const handleEnvChange = async (newEnv: "dev" | "prod") => {
     if (newEnv === "prod") {
@@ -55,10 +61,10 @@ export default function MaintenanceToggle() {
   const toggleMaintenanceMode = async () => {
     const newValue = !isMaintenanceMode;
     const actionText = newValue ? "activar" : "desactivar";
-    
+
     const result = await Swal.fire({
       title: `¿Estás seguro de ${actionText} el modo mantenimiento?`,
-      text: newValue 
+      text: newValue
         ? "El sistema backend no estará disponible para los usuarios mientras esté en mantenimiento."
         : "El sistema backend volverá a estar disponible para todos los usuarios.",
       icon: "warning",
@@ -77,17 +83,22 @@ export default function MaintenanceToggle() {
     setError(null);
 
     try {
-      const response = await fetch(`/api/configuracion/mantenimiento?env=${env}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
+      const response = await fetch(
+        `/api/configuracion/mantenimiento?env=${env}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ en_mantenimiento: newValue }),
         },
-        body: JSON.stringify({ en_mantenimiento: newValue }),
-      });
+      );
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || "Error al actualizar la configuración");
+        throw new Error(
+          errorData.error || "Error al actualizar la configuración",
+        );
       }
 
       const data = await response.json();
@@ -101,7 +112,11 @@ export default function MaintenanceToggle() {
         showConfirmButton: false,
       });
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Error al actualizar la configuración");
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Error al actualizar la configuración",
+      );
       Swal.fire({
         icon: "error",
         title: "Error",
@@ -115,8 +130,8 @@ export default function MaintenanceToggle() {
 
   return (
     <div>
-      <div className="mb-8 rounded-2xl bg-white p-6 shadow-sm border border-slate-200">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <div className="mb-8 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
             <h1 className="text-3xl font-semibold text-slate-900">
               Modo Mantenimiento
@@ -138,53 +153,48 @@ export default function MaintenanceToggle() {
         </div>
       )}
 
-      <div className="rounded-2xl bg-white p-8 shadow-sm border border-slate-200">
-        <div className="flex flex-col md:flex-row items-center justify-between gap-8">
+      <div className="rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
+        <div className="flex flex-col items-center justify-between gap-8 md:flex-row">
           <div className="flex-1">
-            <h2 className="text-xl font-medium text-slate-900 flex items-center gap-2">
+            <h2 className="flex items-center gap-2 text-xl font-medium text-slate-900">
               Estado actual del sistema
               {isLoading && (
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 ml-2"></div>
+                <div className="ml-2 h-4 w-4 animate-spin rounded-full border-b-2 border-blue-600"></div>
               )}
             </h2>
-            <p className="text-slate-500 mt-2 max-w-2xl">
-              Al activar el modo de mantenimiento, las aplicaciones conectadas al backend
-              (entorno <strong>{env.toUpperCase()}</strong>) recibirán respuestas
-              indicando que el sistema no está disponible.
+            <p className="mt-2 max-w-2xl text-slate-500">
+              Al activar el modo de mantenimiento, las aplicaciones conectadas
+              al backend (entorno <strong>{env.toUpperCase()}</strong>)
+              recibirán respuestas indicando que el sistema no está disponible.
             </p>
           </div>
-          
-          <div className="flex flex-col items-center justify-center p-6 rounded-xl bg-slate-50 border border-slate-100 min-w-[250px]">
+
+          <div className="flex min-w-[250px] flex-col items-center justify-center rounded-xl border border-slate-100 bg-slate-50 p-6">
             <div className="mb-4 text-lg font-semibold">
-              <span className={isMaintenanceMode ? "text-red-600" : "text-emerald-600"}>
+              <span
+                className={
+                  isMaintenanceMode ? "text-red-600" : "text-emerald-600"
+                }
+              >
                 {isMaintenanceMode ? "EN MANTENIMIENTO" : "OPERACIONAL"}
               </span>
             </div>
-            
-            <button 
+
+            <button
               onClick={toggleMaintenanceMode}
               disabled={isLoading}
-              className={`
-                relative inline-flex h-10 w-20 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent 
-                transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2
-                ${isMaintenanceMode ? 'bg-red-500' : 'bg-emerald-500'}
-                ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}
-              `}
+              className={`relative inline-flex h-10 w-20 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 focus:outline-none ${isMaintenanceMode ? "bg-red-500" : "bg-emerald-500"} ${isLoading ? "cursor-not-allowed opacity-50" : ""} `}
               role="switch"
               aria-checked={isMaintenanceMode}
             >
               <span className="sr-only">Alternar modo mantenimiento</span>
               <span
                 aria-hidden="true"
-                className={`
-                  pointer-events-none inline-block h-9 w-9 transform rounded-full bg-white shadow ring-0 
-                  transition duration-200 ease-in-out
-                  ${isMaintenanceMode ? 'translate-x-10' : 'translate-x-0'}
-                `}
+                className={`pointer-events-none inline-block h-9 w-9 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${isMaintenanceMode ? "translate-x-10" : "translate-x-0"} `}
               />
             </button>
-            <div className="mt-3 text-sm text-slate-500 font-medium">
-              Click para {isMaintenanceMode ? 'desactivar' : 'activar'}
+            <div className="mt-3 text-sm font-medium text-slate-500">
+              Click para {isMaintenanceMode ? "desactivar" : "activar"}
             </div>
           </div>
         </div>

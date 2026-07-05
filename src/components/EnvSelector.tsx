@@ -5,9 +5,9 @@ interface EnvSelectorProps {
 
 export function EnvSelector({ onChange, currentEnv }: EnvSelectorProps) {
   return (
-    <div className="flex items-center gap-4 bg-slate-100 px-4 py-2 rounded-lg">
+    <div className="flex items-center gap-4 rounded-lg bg-slate-100 px-4 py-2">
       <span className="text-sm font-medium text-slate-600">Base de datos:</span>
-      <label className="flex items-center gap-2 cursor-pointer">
+      <label className="flex cursor-pointer items-center gap-2">
         <input
           type="radio"
           name="env"
@@ -22,7 +22,7 @@ export function EnvSelector({ onChange, currentEnv }: EnvSelectorProps) {
           Dev
         </span>
       </label>
-      <label className="flex items-center gap-2 cursor-pointer">
+      <label className="flex cursor-pointer items-center gap-2">
         <input
           type="radio"
           name="env"
@@ -38,7 +38,7 @@ export function EnvSelector({ onChange, currentEnv }: EnvSelectorProps) {
         </span>
       </label>
       {currentEnv === "prod" && (
-        <span className="text-xs bg-red-100 text-red-700 px-2 py-1 rounded font-medium">
+        <span className="rounded bg-red-100 px-2 py-1 text-xs font-medium text-red-700">
           ⚠️ PRODUCCIÓN
         </span>
       )}

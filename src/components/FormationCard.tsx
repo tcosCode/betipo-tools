@@ -15,31 +15,31 @@ export function FormationCard({
   onDelete,
 }: FormationCardProps) {
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden hover:shadow-md transition-shadow duration-200 flex flex-col justify-between">
+    <div className="flex flex-col justify-between overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition-shadow duration-200 hover:shadow-md">
       <div className="p-6">
-        <div className="flex justify-between items-start mb-4">
-          <div className="bg-blue-50 text-blue-700 px-2.5 py-1 rounded-md text-xs font-medium uppercase tracking-wide">
+        <div className="mb-4 flex items-start justify-between">
+          <div className="rounded-md bg-blue-50 px-2.5 py-1 text-xs font-medium tracking-wide text-blue-700 uppercase">
             {formation.entidad}
           </div>
           {formation.oculta && (
-            <span className="text-gray-400 bg-gray-100 px-2 py-0.5 rounded text-xs">
+            <span className="rounded bg-gray-100 px-2 py-0.5 text-xs text-gray-400">
               Oculta
             </span>
           )}
         </div>
 
         <h3
-          className="text-lg font-bold text-slate-900 mb-2 line-clamp-2"
+          className="mb-2 line-clamp-2 text-lg font-bold text-slate-900"
           title={formation.asunto}
         >
           {formation.asunto}
         </h3>
 
-        <p className="text-slate-600 text-sm mb-4 line-clamp-3">
+        <p className="mb-4 line-clamp-3 text-sm text-slate-600">
           {formation.descripcion}
         </p>
 
-        <div className="text-xs text-slate-500 space-y-1">
+        <div className="space-y-1 text-xs text-slate-500">
           <div className="flex items-center gap-2">
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -87,10 +87,10 @@ export function FormationCard({
         </div>
       </div>
 
-      <div className="bg-gray-50 px-6 py-4 border-t border-gray-100 flex items-center justify-between">
+      <div className="flex items-center justify-between border-t border-gray-100 bg-gray-50 px-6 py-4">
         <button
           onClick={() => onEdit(formation)}
-          className="text-sm font-medium text-slate-600 hover:text-blue-600 flex items-center gap-1.5 transition-colors"
+          className="flex items-center gap-1.5 text-sm font-medium text-slate-600 transition-colors hover:text-blue-600"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -124,7 +124,7 @@ export function FormationCard({
               onDelete(formation.id);
             }
           }}
-          className="text-sm font-medium text-red-500 hover:text-red-700 flex items-center gap-1.5 transition-colors"
+          className="flex items-center gap-1.5 text-sm font-medium text-red-500 transition-colors hover:text-red-700"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"

@@ -162,8 +162,8 @@ export default function FormationGrid({
 
   return (
     <div>
-      <div className="mb-8 rounded-2xl bg-white p-6 shadow-sm border border-slate-200">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <div className="mb-8 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
             <h1 className="text-3xl font-semibold text-slate-900">
               Formaciones
@@ -207,10 +207,10 @@ export default function FormationGrid({
 
       {isLoading ? (
         <div className="flex justify-center py-12">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+          <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-blue-600"></div>
         </div>
       ) : formations.length === 0 ? (
-        <div className="flex flex-col items-center justify-center rounded-2xl bg-white py-16 text-center shadow-sm border border-slate-200">
+        <div className="flex flex-col items-center justify-center rounded-2xl border border-slate-200 bg-white py-16 text-center shadow-sm">
           <div className="mb-4 rounded-full bg-blue-50 p-4 text-blue-600">
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -235,7 +235,7 @@ export default function FormationGrid({
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
           {formations.map((formation) => (
             <FormationCard
               key={formation.id}

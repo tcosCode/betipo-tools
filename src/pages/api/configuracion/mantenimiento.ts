@@ -15,7 +15,8 @@ export const GET: APIRoute = async ({ url }) => {
     `;
 
     // Si no hay fila en la tabla configuración, asumimos false.
-    const en_mantenimiento = result.length > 0 ? result[0].en_mantenimiento === true : false;
+    const en_mantenimiento =
+      result.length > 0 ? result[0].en_mantenimiento === true : false;
 
     return new Response(JSON.stringify({ en_mantenimiento }), {
       status: 200,
@@ -43,7 +44,7 @@ export const PUT: APIRoute = async ({ request, url }) => {
 
     // Primero verificamos si hay algún registro
     const countResult = await sql`SELECT count(*) FROM configuracion`;
-    
+
     let result;
     if (parseInt(countResult[0].count) === 0) {
       // Si la tabla está vacía, insertamos
@@ -61,15 +62,21 @@ export const PUT: APIRoute = async ({ request, url }) => {
       `;
     }
 
-    return new Response(JSON.stringify({ en_mantenimiento: result[0].en_mantenimiento }), {
-      status: 200,
-      headers: { "Content-Type": "application/json" },
-    });
+    return new Response(
+      JSON.stringify({ en_mantenimiento: result[0].en_mantenimiento }),
+      {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      },
+    );
   } catch (error) {
     console.error("Error updating configuracion:", error);
-    return new Response(JSON.stringify({ error: "Error updating configuration" }), {
-      status: 500,
-      headers: { "Content-Type": "application/json" },
-    });
+    return new Response(
+      JSON.stringify({ error: "Error updating configuration" }),
+      {
+        status: 500,
+        headers: { "Content-Type": "application/json" },
+      },
+    );
   }
 };
