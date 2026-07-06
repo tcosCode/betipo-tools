@@ -2,6 +2,7 @@ export const prerender = false;
 
 import type { APIRoute } from "astro";
 import { getDb } from "../../../lib/db";
+import { json } from "../../../lib/http";
 import { formationInputSchema } from "../../../lib/validation";
 import { dbDateToUtc } from "../../../utils/dates";
 
@@ -11,18 +12,13 @@ export const PUT: APIRoute = async ({ request, params, url }) => {
   const sql = getDb(env);
 
   if (!id) {
-    return new Response(JSON.stringify({ error: "Missing ID" }), {
-      status: 400,
-    });
+    return json({ error: "Missing ID" }, 400);
   }
 
   try {
     const data = formationInputSchema.safeParse(await request.json());
     if (!data.success) {
-      return new Response(JSON.stringify({ error: "Invalid formation data" }), {
-        status: 400,
-        headers: { "Content-Type": "application/json" },
-      });
+      return json({ error: "Invalid formation data" }, 400);
     }
 
     const {
@@ -51,9 +47,7 @@ export const PUT: APIRoute = async ({ request, params, url }) => {
     `;
 
     if (result.length === 0) {
-      return new Response(JSON.stringify({ error: "Formation not found" }), {
-        status: 404,
-      });
+      return json({ error: "Formation not found" }, 404);
     }
 
     const formation = {
@@ -62,16 +56,10 @@ export const PUT: APIRoute = async ({ request, params, url }) => {
       fecha_fin: dbDateToUtc(result[0].fecha_fin),
     };
 
-    return new Response(JSON.stringify(formation), {
-      status: 200,
-      headers: { "Content-Type": "application/json" },
-    });
+    return json(formation);
   } catch (error) {
     console.error("Error updating formation:", error);
-    return new Response(JSON.stringify({ error: "Error updating formation" }), {
-      status: 500,
-      headers: { "Content-Type": "application/json" },
-    });
+    return json({ error: "Error updating formation" }, 500);
   }
 };
 
@@ -81,9 +69,7 @@ export const DELETE: APIRoute = async ({ params, url }) => {
   const sql = getDb(env);
 
   if (!id) {
-    return new Response(JSON.stringify({ error: "Missing ID" }), {
-      status: 400,
-    });
+    return json({ error: "Missing ID" }, 400);
   }
 
   try {
@@ -94,20 +80,12 @@ export const DELETE: APIRoute = async ({ params, url }) => {
     `;
 
     if (result.length === 0) {
-      return new Response(JSON.stringify({ error: "Formation not found" }), {
-        status: 404,
-      });
+      return json({ error: "Formation not found" }, 404);
     }
 
-    return new Response(JSON.stringify({ message: "Deleted successfully" }), {
-      status: 200,
-      headers: { "Content-Type": "application/json" },
-    });
+    return json({ message: "Deleted successfully" });
   } catch (error) {
     console.error("Error deleting formation:", error);
-    return new Response(JSON.stringify({ error: "Error deleting formation" }), {
-      status: 500,
-      headers: { "Content-Type": "application/json" },
-    });
+    return json({ error: "Error deleting formation" }, 500);
   }
 };

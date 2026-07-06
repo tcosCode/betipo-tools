@@ -2,6 +2,7 @@ export const prerender = false;
 
 import type { APIRoute } from "astro";
 import { getDb } from "../../../lib/db";
+import { json } from "../../../lib/http";
 import { maintenanceInputSchema } from "../../../lib/validation";
 
 export const GET: APIRoute = async ({ url }) => {
@@ -19,19 +20,10 @@ export const GET: APIRoute = async ({ url }) => {
     const en_mantenimiento =
       result.length > 0 ? result[0].en_mantenimiento === true : false;
 
-    return new Response(JSON.stringify({ en_mantenimiento }), {
-      status: 200,
-      headers: { "Content-Type": "application/json" },
-    });
+    return json({ en_mantenimiento });
   } catch (error) {
     console.error("Error fetching configuracion:", error);
-    return new Response(
-      JSON.stringify({ error: "Error fetch configuration" }),
-      {
-        status: 500,
-        headers: { "Content-Type": "application/json" },
-      },
-    );
+    return json({ error: "Error fetch configuration" }, 500);
   }
 };
 
@@ -42,13 +34,7 @@ export const PUT: APIRoute = async ({ request, url }) => {
   try {
     const data = maintenanceInputSchema.safeParse(await request.json());
     if (!data.success) {
-      return new Response(
-        JSON.stringify({ error: "Invalid maintenance data" }),
-        {
-          status: 400,
-          headers: { "Content-Type": "application/json" },
-        },
-      );
+      return json({ error: "Invalid maintenance data" }, 400);
     }
 
     const { en_mantenimiento } = data.data;
@@ -73,21 +59,9 @@ export const PUT: APIRoute = async ({ request, url }) => {
       `;
     }
 
-    return new Response(
-      JSON.stringify({ en_mantenimiento: result[0].en_mantenimiento }),
-      {
-        status: 200,
-        headers: { "Content-Type": "application/json" },
-      },
-    );
+    return json({ en_mantenimiento: result[0].en_mantenimiento });
   } catch (error) {
     console.error("Error updating configuracion:", error);
-    return new Response(
-      JSON.stringify({ error: "Error updating configuration" }),
-      {
-        status: 500,
-        headers: { "Content-Type": "application/json" },
-      },
-    );
+    return json({ error: "Error updating configuration" }, 500);
   }
 };

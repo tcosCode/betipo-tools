@@ -2,6 +2,7 @@ export const prerender = false;
 
 import type { APIRoute } from "astro";
 import { getDb } from "../../../lib/db";
+import { json } from "../../../lib/http";
 import { formationInputSchema } from "../../../lib/validation";
 import { dbDateToUtc } from "../../../utils/dates";
 
@@ -25,19 +26,10 @@ export const GET: APIRoute = async ({ url }) => {
       fecha_fin: dbDateToUtc(f.fecha_fin),
     }));
 
-    return new Response(JSON.stringify(formations), {
-      status: 200,
-      headers: { "Content-Type": "application/json" },
-    });
+    return json(formations);
   } catch (error) {
     console.error("Error fetching formations:", error);
-    return new Response(
-      JSON.stringify({ error: "Error fetching formations" }),
-      {
-        status: 500,
-        headers: { "Content-Type": "application/json" },
-      },
-    );
+    return json({ error: "Error fetching formations" }, 500);
   }
 };
 
@@ -48,10 +40,7 @@ export const POST: APIRoute = async ({ request, url }) => {
   try {
     const data = formationInputSchema.safeParse(await request.json());
     if (!data.success) {
-      return new Response(JSON.stringify({ error: "Invalid formation data" }), {
-        status: 400,
-        headers: { "Content-Type": "application/json" },
-      });
+      return json({ error: "Invalid formation data" }, 400);
     }
 
     const {
@@ -78,15 +67,9 @@ export const POST: APIRoute = async ({ request, url }) => {
       fecha_fin: dbDateToUtc(result[0].fecha_fin),
     };
 
-    return new Response(JSON.stringify(formation), {
-      status: 201,
-      headers: { "Content-Type": "application/json" },
-    });
+    return json(formation, 201);
   } catch (error) {
     console.error("Error creating formation:", error);
-    return new Response(JSON.stringify({ error: "Error creating formation" }), {
-      status: 500,
-      headers: { "Content-Type": "application/json" },
-    });
+    return json({ error: "Error creating formation" }, 500);
   }
 };
