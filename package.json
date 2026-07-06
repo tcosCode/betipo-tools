@@ -12,7 +12,9 @@
     "format:check": "prettier --check .",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
-    "verify": "npm run format:check && npm run lint && npm run check && npm run build"
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "verify": "npm run format:check && npm run lint && npm run test && npm run check && npm run build"
   },
   "dependencies": {
     "@astrojs/netlify": "^8.1.1",
@@ -40,6 +42,7 @@
     "prettier-plugin-astro": "^0.14.1",
     "prettier-plugin-tailwindcss": "^0.8.0",
     "typescript": "^6.0.3",
-    "typescript-eslint": "^8.62.1"
+    "typescript-eslint": "^8.62.1",
+    "vitest": "^4.1.9"
   }
 }
