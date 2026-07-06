@@ -1,5 +1,6 @@
 import { getSecret } from "astro:env/server";
 import postgres from "postgres";
+import type { AppEnv } from "./env";
 
 const requireSecret = (key: string) => {
   const value = getSecret(key);
@@ -32,7 +33,7 @@ const sqlProd = postgres({
   ssl: "require",
 });
 
-export const getDb = (env: "dev" | "prod" = "dev") => {
+export const getDb = (env: AppEnv = "dev") => {
   return env === "prod" ? sqlProd : sqlDev;
 };
 

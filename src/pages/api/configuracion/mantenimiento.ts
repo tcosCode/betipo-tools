@@ -2,11 +2,16 @@ export const prerender = false;
 
 import type { APIRoute } from "astro";
 import { getDb } from "../../../lib/db";
+import { parseEnv } from "../../../lib/env";
 import { json } from "../../../lib/http";
 import { maintenanceInputSchema } from "../../../lib/validation";
 
 export const GET: APIRoute = async ({ url }) => {
-  const env = (url.searchParams.get("env") as "dev" | "prod") || "dev";
+  const env = parseEnv(url);
+  if (!env) {
+    return json({ error: "Invalid environment" }, 400);
+  }
+
   const sql = getDb(env);
 
   try {
@@ -28,7 +33,11 @@ export const GET: APIRoute = async ({ url }) => {
 };
 
 export const PUT: APIRoute = async ({ request, url }) => {
-  const env = (url.searchParams.get("env") as "dev" | "prod") || "dev";
+  const env = parseEnv(url);
+  if (!env) {
+    return json({ error: "Invalid environment" }, 400);
+  }
+
   const sql = getDb(env);
 
   try {
