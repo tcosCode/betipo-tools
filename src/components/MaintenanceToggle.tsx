@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import Swal from "sweetalert2";
 import { EnvSelector } from "./EnvSelector";
+import { getErrorMessage, getResponseError } from "../utils/errors";
+import { confirmProductionEnv } from "../utils/production";
 
 export default function MaintenanceToggle() {
   const [env, setEnv] = useState<"dev" | "prod">("dev");
@@ -16,19 +18,26 @@ export default function MaintenanceToggle() {
         const response = await fetch(
           `/api/configuracion/mantenimiento?env=${env}`,
         );
-        if (!response.ok) throw new Error("Error al cargar la configuración");
+        if (!response.ok) {
+          throw new Error(
+            await getResponseError(
+              response,
+              "Error al cargar la configuración",
+            ),
+          );
+        }
         const data = await response.json();
         setIsMaintenanceMode(data.en_mantenimiento);
       } catch (err) {
-        setError(
-          err instanceof Error
-            ? err.message
-            : "Error al cargar la configuración",
+        const message = getErrorMessage(
+          err,
+          "Error al cargar la configuración",
         );
+        setError(message);
         Swal.fire({
           icon: "error",
           title: "Error",
-          text: "Error al cargar la configuración de mantenimiento",
+          text: message,
         });
       } finally {
         setIsLoading(false);
@@ -40,18 +49,11 @@ export default function MaintenanceToggle() {
 
   const handleEnvChange = async (newEnv: "dev" | "prod") => {
     if (newEnv === "prod") {
-      const result = await Swal.fire({
-        title: "¿Cambiar a PRODUCCIÓN?",
-        text: "Los cambios afectarán datos reales en la base de datos de producción.",
-        icon: "warning",
-        showCancelButton: true,
-        confirmButtonColor: "#d33",
-        cancelButtonColor: "#6b7280",
-        confirmButtonText: "Sí, cambiar",
-        cancelButtonText: "Cancelar",
-      });
+      const confirmed = await confirmProductionEnv(
+        "Los cambios afectarán datos reales en la base de datos de producción.",
+      );
 
-      if (!result.isConfirmed) {
+      if (!confirmed) {
         return;
       }
     }
@@ -95,9 +97,11 @@ export default function MaintenanceToggle() {
       );
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
         throw new Error(
-          errorData.error || "Error al actualizar la configuración",
+          await getResponseError(
+            response,
+            "Error al actualizar la configuración",
+          ),
         );
       }
 
@@ -112,15 +116,15 @@ export default function MaintenanceToggle() {
         showConfirmButton: false,
       });
     } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : "Error al actualizar la configuración",
+      const message = getErrorMessage(
+        err,
+        "Error al actualizar la configuración",
       );
+      setError(message);
       Swal.fire({
         icon: "error",
         title: "Error",
-        text: "Error al actualizar la configuración de mantenimiento. Inténtalo de nuevo.",
+        text: message,
       });
       // Revert initial UI switch on error automatically handled by fetching actual state on next cycle or just leaving as is
     } finally {

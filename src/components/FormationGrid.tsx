@@ -5,6 +5,8 @@ import { FormationCard } from "./FormationCard";
 import { FormationModal } from "./FormationModal";
 import { EnvSelector } from "./EnvSelector";
 import type { Formation } from "../types";
+import { getErrorMessage, getResponseError } from "../utils/errors";
+import { confirmProductionEnv } from "../utils/production";
 
 interface FormationGridProps {
   initialFormations: Formation[];
@@ -33,15 +35,18 @@ export default function FormationGrid({
       setError(null);
       try {
         const response = await fetch(`/api/formaciones?env=${env}`);
-        if (!response.ok) throw new Error("Error al cargar");
+        if (!response.ok) {
+          throw new Error(await getResponseError(response, "Error al cargar"));
+        }
         const data = await response.json();
         setFormations(data);
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Error al cargar");
+        const message = getErrorMessage(err, "Error al cargar");
+        setError(message);
         Swal.fire({
           icon: "error",
           title: "Error",
-          text: "Error al cargar",
+          text: message,
         });
       } finally {
         setIsLoading(false);
@@ -53,18 +58,11 @@ export default function FormationGrid({
 
   const handleEnvChange = async (newEnv: "dev" | "prod") => {
     if (newEnv === "prod") {
-      const result = await Swal.fire({
-        title: "¿Cambiar a PRODUCCIÓN?",
-        text: "Los cambios afectarán datos reales",
-        icon: "warning",
-        showCancelButton: true,
-        confirmButtonColor: "#d33",
-        cancelButtonColor: "#6b7280",
-        confirmButtonText: "Sí, cambiar",
-        cancelButtonText: "Cancelar",
-      });
+      const confirmed = await confirmProductionEnv(
+        "Los cambios afectarán datos reales",
+      );
 
-      if (!result.isConfirmed) {
+      if (!confirmed) {
         return;
       }
     }
@@ -89,15 +87,18 @@ export default function FormationGrid({
         method: "DELETE",
       });
 
-      if (!response.ok) throw new Error("Error al eliminar");
+      if (!response.ok) {
+        throw new Error(await getResponseError(response, "Error al eliminar"));
+      }
 
       setFormations((prev) => prev.filter((f) => f.id !== id));
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Error al eliminar");
+      const message = getErrorMessage(err, "Error al eliminar");
+      setError(message);
       Swal.fire({
         icon: "error",
         title: "Error",
-        text: "Error al eliminar",
+        text: message,
       });
     } finally {
       setIsLoading(false);
@@ -124,8 +125,7 @@ export default function FormationGrid({
       });
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || "Error al guardar");
+        throw new Error(await getResponseError(response, "Error al guardar"));
       }
 
       const savedFormation = await response.json();
@@ -147,13 +147,14 @@ export default function FormationGrid({
 
       setIsModalOpen(false);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Error al guardar");
+      const message = getErrorMessage(err, "Error al guardar");
+      setError(message);
       console.error(err);
 
       Swal.fire({
         icon: "error",
         title: "Error",
-        text: "Error al guardar",
+        text: message,
       });
     } finally {
       setIsLoading(false);
