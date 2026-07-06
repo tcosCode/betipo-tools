@@ -1,12 +1,12 @@
 ---
 export const prerender = false;
 
-import Layout from "../layouts/Layout.astro";
+import AuthLayout from "../layouts/AuthLayout.astro";
 import { SignIn } from "@clerk/astro/components";
 ---
 
-<Layout>
+<AuthLayout>
   <div class="flex min-h-[80vh] items-center justify-center px-4">
     <SignIn />
   </div>
-</Layout>
+</AuthLayout>
