@@ -7,7 +7,12 @@ import { json } from "../../../lib/http";
 import { formationInputSchema } from "../../../lib/validation";
 import { dbDateToUtc } from "../../../utils/dates";
 
-export const PUT: APIRoute = async ({ request, params, url }) => {
+export const PUT: APIRoute = async ({ request, params, url, locals }) => {
+  const { userId } = locals.auth();
+  if (!userId) {
+    return json({ error: "Unauthorized" }, 401);
+  }
+
   const id = params.id;
   const env = parseEnv(url);
   if (!env) {
@@ -68,7 +73,12 @@ export const PUT: APIRoute = async ({ request, params, url }) => {
   }
 };
 
-export const DELETE: APIRoute = async ({ params, url }) => {
+export const DELETE: APIRoute = async ({ params, url, locals }) => {
+  const { userId } = locals.auth();
+  if (!userId) {
+    return json({ error: "Unauthorized" }, 401);
+  }
+
   const id = params.id;
   const env = parseEnv(url);
   if (!env) {

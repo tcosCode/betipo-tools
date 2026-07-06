@@ -7,7 +7,12 @@ import { json } from "../../../lib/http";
 import { formationInputSchema } from "../../../lib/validation";
 import { dbDateToUtc } from "../../../utils/dates";
 
-export const GET: APIRoute = async ({ url }) => {
+export const GET: APIRoute = async ({ url, locals }) => {
+  const { userId } = locals.auth();
+  if (!userId) {
+    return json({ error: "Unauthorized" }, 401);
+  }
+
   const env = parseEnv(url);
   if (!env) {
     return json({ error: "Invalid environment" }, 400);
@@ -38,7 +43,12 @@ export const GET: APIRoute = async ({ url }) => {
   }
 };
 
-export const POST: APIRoute = async ({ request, url }) => {
+export const POST: APIRoute = async ({ request, url, locals }) => {
+  const { userId } = locals.auth();
+  if (!userId) {
+    return json({ error: "Unauthorized" }, 401);
+  }
+
   const env = parseEnv(url);
   if (!env) {
     return json({ error: "Invalid environment" }, 400);
