@@ -10,7 +10,7 @@ import clerk from "@clerk/astro";
 export default defineConfig({
   output: "server",
   adapter: netlify({
-    edgeMiddleware: true,
+    edgeMiddleware: false,
   }),
   integrations: [react(), clerk()],
 
