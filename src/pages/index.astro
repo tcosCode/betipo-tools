@@ -1,6 +1,11 @@
 ---
 import Layout from "../layouts/Layout.astro";
 import DashboardTabs from "../components/DashboardTabs";
+
+const { userId } = Astro.locals.auth();
+if (!userId) {
+  return Astro.redirect("/sign-in");
+}
 ---
 
 <Layout>

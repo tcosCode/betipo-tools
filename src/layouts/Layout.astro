@@ -1,5 +1,6 @@
 ---
 import "../styles/global.css";
+import { Show, UserButton, SignInButton } from "@clerk/astro/components";
 ---
 
 <!doctype html>
@@ -13,6 +14,14 @@ import "../styles/global.css";
   </head>
 
   <body class="min-h-screen bg-slate-100 text-slate-800 antialiased">
+    <div class="flex justify-end px-4 py-3">
+      <Show when="signed-out">
+        <SignInButton mode="modal" />
+      </Show>
+      <Show when="signed-in">
+        <UserButton />
+      </Show>
+    </div>
     <slot />
   </body>
 </html>
