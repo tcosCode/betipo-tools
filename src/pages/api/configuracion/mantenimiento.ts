@@ -2,6 +2,7 @@ export const prerender = false;
 
 import type { APIRoute } from "astro";
 import { getDb } from "../../../lib/db";
+import { maintenanceInputSchema } from "../../../lib/validation";
 
 export const GET: APIRoute = async ({ url }) => {
   const env = (url.searchParams.get("env") as "dev" | "prod") || "dev";
@@ -39,8 +40,18 @@ export const PUT: APIRoute = async ({ request, url }) => {
   const sql = getDb(env);
 
   try {
-    const data = await request.json();
-    const en_mantenimiento = data.en_mantenimiento === true;
+    const data = maintenanceInputSchema.safeParse(await request.json());
+    if (!data.success) {
+      return new Response(
+        JSON.stringify({ error: "Invalid maintenance data" }),
+        {
+          status: 400,
+          headers: { "Content-Type": "application/json" },
+        },
+      );
+    }
+
+    const { en_mantenimiento } = data.data;
 
     // Primero verificamos si hay algún registro
     const countResult = await sql`SELECT count(*) FROM configuracion`;

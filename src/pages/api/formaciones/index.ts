@@ -2,6 +2,7 @@ export const prerender = false;
 
 import type { APIRoute } from "astro";
 import { getDb } from "../../../lib/db";
+import { formationInputSchema } from "../../../lib/validation";
 import { dbDateToUtc } from "../../../utils/dates";
 
 export const GET: APIRoute = async ({ url }) => {
@@ -45,7 +46,14 @@ export const POST: APIRoute = async ({ request, url }) => {
   const sql = getDb(env);
 
   try {
-    const data = await request.json();
+    const data = formationInputSchema.safeParse(await request.json());
+    if (!data.success) {
+      return new Response(JSON.stringify({ error: "Invalid formation data" }), {
+        status: 400,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
     const {
       asunto,
       entidad,
@@ -54,7 +62,7 @@ export const POST: APIRoute = async ({ request, url }) => {
       fecha_fin,
       enlace,
       oculta,
-    } = data;
+    } = data.data;
 
     const result = await sql`
       INSERT INTO formaciones (asunto, entidad, descripcion, fecha_inicio, fecha_fin, enlace, oculta)
