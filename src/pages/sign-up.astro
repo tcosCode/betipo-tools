@@ -1,0 +1,12 @@
+---
+export const prerender = false;
+
+import Layout from "../layouts/Layout.astro";
+import { SignUp } from "@clerk/astro/components";
+---
+
+<Layout>
+  <div class="flex min-h-[80vh] items-center justify-center px-4">
+    <SignUp />
+  </div>
+</Layout>
