@@ -1,20 +1,34 @@
+import { getSecret } from "astro:env/server";
 import postgres from "postgres";
 
+const requireSecret = (key: string) => {
+  const value = getSecret(key);
+  if (!value) {
+    throw new Error(`Missing required environment variable: ${key}`);
+  }
+  return value;
+};
+
+const dbHost = requireSecret("DB_HOST");
+const dbPort = parseInt(getSecret("DB_PORT") || "5432", 10);
+const dbUsername = requireSecret("DB_USERNAME");
+const dbPassword = requireSecret("DB_PASSWORD");
+
 const sqlDev = postgres({
-  host: import.meta.env.DB_HOST,
-  port: parseInt(import.meta.env.DB_PORT || "5432"),
-  database: import.meta.env.DB_DATABASE,
-  username: import.meta.env.DB_USERNAME,
-  password: import.meta.env.DB_PASSWORD,
+  host: dbHost,
+  port: dbPort,
+  database: requireSecret("DB_DATABASE"),
+  username: dbUsername,
+  password: dbPassword,
   ssl: "require",
 });
 
 const sqlProd = postgres({
-  host: import.meta.env.DB_HOST,
-  port: parseInt(import.meta.env.DB_PORT || "5432"),
-  database: import.meta.env.DB_DATABASE_PROD,
-  username: import.meta.env.DB_USERNAME,
-  password: import.meta.env.DB_PASSWORD,
+  host: dbHost,
+  port: dbPort,
+  database: requireSecret("DB_DATABASE_PROD"),
+  username: dbUsername,
+  password: dbPassword,
   ssl: "require",
 });
 
