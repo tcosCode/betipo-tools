@@ -1,11 +1,13 @@
-import { useState } from "react";
+import { lazy, Suspense, useState } from "react";
 import FormationGrid from "./FormationGrid";
 import MaintenanceToggle from "./MaintenanceToggle";
 
+const CampaignsTab = lazy(() => import("./campaigns/CampaignsTab"));
+
+type DashboardTab = "formaciones" | "mantenimiento" | "campannas";
+
 export default function DashboardTabs() {
-  const [activeTab, setActiveTab] = useState<"formaciones" | "mantenimiento">(
-    "formaciones",
-  );
+  const [activeTab, setActiveTab] = useState<DashboardTab>("formaciones");
 
   return (
     <div className="flex flex-col gap-6">
@@ -31,14 +33,34 @@ export default function DashboardTabs() {
           >
             Mantenimiento
           </button>
+          <button
+            onClick={() => setActiveTab("campannas")}
+            className={`border-b-2 px-1 py-4 text-sm font-medium whitespace-nowrap transition-colors ${
+              activeTab === "campannas"
+                ? "border-blue-600 text-blue-600"
+                : "border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-700"
+            } `}
+          >
+            Campañas
+          </button>
         </nav>
       </div>
 
       <div className="mt-4">
-        {activeTab === "formaciones" ? (
+        {activeTab === "formaciones" && (
           <FormationGrid initialFormations={[]} />
-        ) : (
-          <MaintenanceToggle />
+        )}
+        {activeTab === "mantenimiento" && <MaintenanceToggle />}
+        {activeTab === "campannas" && (
+          <Suspense
+            fallback={
+              <div className="py-12 text-center text-slate-500">
+                Cargando campañas…
+              </div>
+            }
+          >
+            <CampaignsTab />
+          </Suspense>
         )}
       </div>
     </div>

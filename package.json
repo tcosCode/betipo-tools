@@ -18,6 +18,7 @@
   },
   "dependencies": {
     "@astrojs/netlify": "^8.1.1",
+    "@astrojs/node": "^11.0.2",
     "@astrojs/react": "^6.0.1",
     "@clerk/astro": "^3.4.11",
     "@clerk/localizations": "^4.12.0",
