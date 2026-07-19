@@ -1,4 +1,14 @@
-import type { CampaignWriteInput, PlanModalTemplate } from "./campaign-schema";
+import type {
+  CampaignWriteInput,
+  PlanModalTemplate,
+  PlanOption,
+} from "./campaign-schema";
+
+export const formatPlanPrice = (price: string) =>
+  price
+    .replace(/(\.\d*?)0+$/, "$1")
+    .replace(/\.$/, "")
+    .replace(".", ",");
 
 const createEmptyCard = (
   index: number,
@@ -49,18 +59,42 @@ export const createCampaignDefaults = (): CampaignWriteInput => ({
       auxiliaryText: { visibility: false, text: "" },
     },
     cards: [createEmptyCard(0), createEmptyCard(1), createEmptyCard(2)],
-    footer: { footerColumns: [] },
+    footer: {
+      footerColumns: [
+        {
+          title: "Prestaciones 1",
+          chip: { visibility: false, text: "" },
+          columnItems: [{ text: "Nueva prestación" }],
+        },
+        {
+          title: "Prestaciones 2",
+          chip: { visibility: false, text: "" },
+          columnItems: [{ text: "Nueva prestación" }],
+        },
+      ],
+    },
   },
 });
 
-export const campaignToFormValues = (campaign: {
-  nombre: string;
-  idsPlanesAplicables: string[];
-  uiTemplate: PlanModalTemplate;
-  updatedAt: string | null;
-}): CampaignWriteInput => ({
+export const campaignToFormValues = (
+  campaign: {
+    nombre: string;
+    idsPlanesAplicables: string[];
+    uiTemplate: PlanModalTemplate;
+    updatedAt: string | null;
+  },
+  plans: PlanOption[],
+): CampaignWriteInput => ({
   nombre: campaign.nombre,
   idsPlanesAplicables: campaign.idsPlanesAplicables,
-  uiTemplate: campaign.uiTemplate,
+  uiTemplate: {
+    ...campaign.uiTemplate,
+    cards: campaign.uiTemplate.cards.map((card) => {
+      const plan = plans.find((option) => option.uuid === card.planUuid);
+      return plan
+        ? { ...card, price: { text: formatPlanPrice(plan.precio) } }
+        : card;
+    }),
+  },
   expectedUpdatedAt: campaign.updatedAt,
 });

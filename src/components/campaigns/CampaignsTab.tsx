@@ -3,6 +3,7 @@ import Swal from "sweetalert2";
 
 import AddIcon from "@mui/icons-material/Add";
 import CampaignIcon from "@mui/icons-material/Campaign";
+import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
@@ -16,6 +17,7 @@ import Typography from "@mui/material/Typography";
 import { ThemeProvider } from "@mui/material/styles";
 
 import {
+  archiveCampaign,
   fetchCampaignPlanOptions,
   fetchCampaigns,
   saveCampaign,
@@ -38,6 +40,7 @@ export default function CampaignsTab() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
+  const [archivingUuid, setArchivingUuid] = useState<string | null>(null);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -88,6 +91,45 @@ export default function CampaignsTab() {
       timer: 1800,
       showConfirmButton: false,
     });
+  };
+
+  const handleArchive = async (campaign: CampaignAdmin) => {
+    const isFallback = campaign.idsPlanesAplicables.length === 0;
+    const confirmation = await Swal.fire({
+      title: `¿Eliminar ${campaign.nombre}?`,
+      text: isFallback
+        ? "Es la campaña fallback. Los planes sin campaña específica dejarán de tener una campaña asignada."
+        : "La campaña dejará de aplicarse a todos los planes de su audiencia.",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#d33",
+      cancelButtonColor: "#6b7280",
+      confirmButtonText: "Sí, eliminar",
+      cancelButtonText: "Cancelar",
+    });
+    if (!confirmation.isConfirmed) return;
+
+    setArchivingUuid(campaign.uuid);
+    try {
+      await archiveCampaign(campaign.uuid);
+      setCampaigns((current) =>
+        current.filter((item) => item.uuid !== campaign.uuid),
+      );
+      await Swal.fire({
+        icon: "success",
+        title: "Campaña eliminada",
+        timer: 1800,
+        showConfirmButton: false,
+      });
+    } catch (archiveError) {
+      await Swal.fire({
+        icon: "error",
+        title: "No se pudo eliminar la campaña",
+        text: getErrorMessage(archiveError, "Error al eliminar campaña"),
+      });
+    } finally {
+      setArchivingUuid(null);
+    }
   };
 
   const plansByUuid = new Map(plans.map((plan) => [plan.uuid, plan]));
@@ -237,12 +279,23 @@ export default function CampaignsTab() {
                             ? "Apertura automática activada"
                             : "Apertura automática desactivada"}
                         </Typography>
-                        <Button
-                          startIcon={<EditOutlinedIcon />}
-                          onClick={() => setEditingCampaign(campaign)}
-                        >
-                          Editar
-                        </Button>
+                        <Stack direction="row" spacing={1}>
+                          <Button
+                            color="error"
+                            startIcon={<DeleteOutlineIcon />}
+                            disabled={archivingUuid === campaign.uuid}
+                            onClick={() => void handleArchive(campaign)}
+                          >
+                            Eliminar
+                          </Button>
+                          <Button
+                            startIcon={<EditOutlinedIcon />}
+                            disabled={archivingUuid === campaign.uuid}
+                            onClick={() => setEditingCampaign(campaign)}
+                          >
+                            Editar
+                          </Button>
+                        </Stack>
                       </Stack>
                     </Stack>
                   </Paper>

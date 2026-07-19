@@ -23,6 +23,7 @@ import type {
   CampaignWriteInput,
   PlanOption,
 } from "../../features/campaigns/campaign-schema";
+import { formatPlanPrice } from "../../features/campaigns/campaign-defaults";
 import { CampaignSwitch, CampaignTextField } from "./CampaignFormFields";
 
 interface CampaignCardEditorProps {
@@ -31,12 +32,6 @@ interface CampaignCardEditorProps {
   setValue: UseFormSetValue<CampaignWriteInput>;
   plans: PlanOption[];
 }
-
-const displayPlanPrice = (price: string) =>
-  price
-    .replace(/(\.\d*?)0+$/, "$1")
-    .replace(/\.$/, "")
-    .replace(".", ",");
 
 export function CampaignCardEditor({
   index,
@@ -88,7 +83,7 @@ export function CampaignCardEditor({
                     });
                     setValue(
                       `${prefix}.price.text`,
-                      displayPlanPrice(plan.precio),
+                      formatPlanPrice(plan.precio),
                       {
                         shouldDirty: true,
                       },
@@ -105,7 +100,7 @@ export function CampaignCardEditor({
                         cardIndex !== index && card.planUuid === plan.uuid,
                     )}
                   >
-                    {plan.nombre} · {displayPlanPrice(plan.precio)} € ·{" "}
+                    {plan.nombre} · {formatPlanPrice(plan.precio)} € ·{" "}
                     {plan.uuid.slice(0, 8)}
                   </MenuItem>
                 ))}
@@ -279,10 +274,28 @@ export function CampaignCardEditor({
             justifyContent="space-between"
             alignItems="center"
           >
-            <CampaignSwitch
+            <Controller
               control={control}
               name={`${prefix}.items.visibility`}
-              label="Mostrar prestaciones"
+              render={({ field }) => (
+                <FormControlLabel
+                  label="Mostrar prestaciones"
+                  control={
+                    <Switch
+                      checked={field.value}
+                      onChange={(_, checked) => {
+                        field.onChange(checked);
+                        if (checked && items.fields.length === 0) {
+                          items.append({
+                            text: "Nueva prestación",
+                            itemChip: { visibility: false, text: "" },
+                          });
+                        }
+                      }}
+                    />
+                  }
+                />
+              )}
             />
             <Button
               size="small"
@@ -323,7 +336,14 @@ export function CampaignCardEditor({
               />
               <IconButton
                 aria-label="Eliminar prestación"
-                onClick={() => items.remove(itemIndex)}
+                onClick={() => {
+                  items.remove(itemIndex);
+                  if (items.fields.length === 1) {
+                    setValue(`${prefix}.items.visibility`, false, {
+                      shouldDirty: true,
+                    });
+                  }
+                }}
               >
                 <DeleteOutlineIcon />
               </IconButton>

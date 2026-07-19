@@ -1,11 +1,13 @@
 import type postgres from "postgres";
 
-import type {
-  CampaignAdmin,
-  CampaignWriteInput,
-  PlanModalTemplate,
-  PlanOption,
+import {
+  planModalTemplateSchema,
+  type CampaignAdmin,
+  type CampaignWriteInput,
+  type PlanModalTemplate,
+  type PlanOption,
 } from "../features/campaigns/campaign-schema";
+import { formatPlanPrice } from "../features/campaigns/campaign-defaults";
 
 type Sql = postgres.Sql;
 type TransactionSql = postgres.TransactionSql;
@@ -51,7 +53,7 @@ const toIsoString = (value: Date | string | null): string | null => {
 const mapCampaign = (row: CampaignDbRow): CampaignAdmin => ({
   uuid: row.uuid,
   nombre: row.nombre,
-  uiTemplate: row.ui_template,
+  uiTemplate: planModalTemplateSchema.parse(row.ui_template),
   idsPlanesAplicables: row.ids_planes_aplicables,
   createdAt: toIsoString(row.created_at)!,
   updatedAt: toIsoString(row.updated_at),
@@ -64,11 +66,6 @@ const mapPlan = (row: PlanDbRow): PlanOption => ({
   precio: row.precio,
   esFreemium: row.es_freemium,
 });
-
-const formatPlanPrice = (price: string) => {
-  const normalized = price.replace(/(\.\d*?)0+$/, "$1").replace(/\.$/, "");
-  return normalized.replace(".", ",");
-};
 
 const validateNameAndAudience = async (
   tx: TransactionSql,
@@ -293,3 +290,25 @@ export const updateCampaign = async (
     `;
     return mapCampaign(rows[0]);
   });
+
+export const archiveCampaign = async (
+  sql: Sql,
+  uuid: string,
+): Promise<void> => {
+  const rows = await sql<{ uuid: string }[]>`
+    UPDATE public.campannas
+    SET deleted_at = CURRENT_TIMESTAMP,
+        updated_at = CURRENT_TIMESTAMP
+    WHERE uuid = ${uuid}::uuid
+      AND deleted_at IS NULL
+    RETURNING uuid
+  `;
+
+  if (rows.length === 0) {
+    throw new CampaignDataError(
+      "Campaña no encontrada",
+      404,
+      "CAMPAIGN_NOT_FOUND",
+    );
+  }
+};

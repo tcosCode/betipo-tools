@@ -10,9 +10,10 @@ import { esES } from "@clerk/localizations";
 export default defineConfig({
   output: "server",
 
-  adapter: process.env.BUILD_PLATFORM === "netlify"
-    ? (await import("@astrojs/netlify")).default({ edgeMiddleware: false })
-    : (await import("@astrojs/node")).default({ mode: "standalone" }),
+  adapter:
+    process.env.BUILD_PLATFORM === "netlify"
+      ? (await import("@astrojs/netlify")).default({ edgeMiddleware: false })
+      : (await import("@astrojs/node")).default({ mode: "standalone" }),
 
   integrations: [react(), clerk({ localization: esES })],
 

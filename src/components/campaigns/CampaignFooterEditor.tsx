@@ -15,10 +15,12 @@ function FooterColumnEditor({
   control,
   index,
   onRemove,
+  canRemove,
 }: Readonly<{
   control: Control<CampaignWriteInput>;
   index: number;
   onRemove: () => void;
+  canRemove: boolean;
 }>) {
   const items = useFieldArray({
     control,
@@ -36,7 +38,11 @@ function FooterColumnEditor({
             label="Título"
             fullWidth
           />
-          <IconButton aria-label="Eliminar columna" onClick={onRemove}>
+          <IconButton
+            aria-label="Eliminar columna"
+            disabled={!canRemove}
+            onClick={onRemove}
+          >
             <DeleteOutlineIcon />
           </IconButton>
         </Stack>
@@ -67,6 +73,7 @@ function FooterColumnEditor({
             />
             <IconButton
               aria-label="Eliminar prestación"
+              disabled={items.fields.length <= 1}
               onClick={() => items.remove(itemIndex)}
             >
               <DeleteOutlineIcon />
@@ -100,7 +107,7 @@ export function CampaignFooterEditor({
         <div>
           <Typography variant="h6">Prestaciones comunes</Typography>
           <Typography variant="body2" color="text.secondary">
-            Hasta cuatro columnas con tres prestaciones cada una.
+            Entre dos y cuatro columnas, con al menos una prestación cada una.
           </Typography>
         </div>
         <Button
@@ -110,7 +117,7 @@ export function CampaignFooterEditor({
             columns.append({
               title: "Nueva columna",
               chip: { visibility: false, text: "" },
-              columnItems: [],
+              columnItems: [{ text: "Nueva prestación" }],
             })
           }
         >
@@ -122,6 +129,7 @@ export function CampaignFooterEditor({
           key={column.id}
           control={control}
           index={index}
+          canRemove={columns.fields.length > 2}
           onRemove={() => columns.remove(index)}
         />
       ))}

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Controller, FormProvider, useForm } from "react-hook-form";
+import Swal from "sweetalert2";
 
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import SaveIcon from "@mui/icons-material/Save";
@@ -68,7 +69,7 @@ export function CampaignEditor({
   const methods = useForm<CampaignWriteInput>({
     resolver: zodResolver(campaignWriteSchema),
     defaultValues: campaign
-      ? campaignToFormValues(campaign)
+      ? campaignToFormValues(campaign, plans)
       : createCampaignDefaults(),
     mode: "onSubmit",
     reValidateMode: "onBlur",
@@ -84,32 +85,55 @@ export function CampaignEditor({
     campaign ? campaign.idsPlanesAplicables.length === 0 : false,
   );
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [validationError, setValidationError] = useState<string | null>(null);
 
-  const closeEditor = () => {
-    if (
-      !isDirty ||
-      window.confirm("Hay cambios sin guardar. ¿Quieres descartarlos?")
-    ) {
+  const closeEditor = async () => {
+    if (!isDirty) {
+      onCancel();
+      return;
+    }
+
+    const result = await Swal.fire({
+      title: "¿Descartar cambios?",
+      text: "Los cambios realizados en la campaña no se guardarán.",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#d33",
+      cancelButtonColor: "#6b7280",
+      confirmButtonText: "Sí, descartar",
+      cancelButtonText: "Continuar editando",
+    });
+
+    if (result.isConfirmed) {
       onCancel();
     }
   };
 
-  const submit = handleSubmit(async (input) => {
-    if (!isFallback && input.idsPlanesAplicables.length === 0) {
-      setError("idsPlanesAplicables", {
-        type: "manual",
-        message: "Selecciona al menos un plan o marca la campaña como fallback",
-      });
-      return;
-    }
+  const submit = handleSubmit(
+    async (input) => {
+      if (!isFallback && input.idsPlanesAplicables.length === 0) {
+        setError("idsPlanesAplicables", {
+          type: "manual",
+          message:
+            "Selecciona al menos un plan o marca la campaña como fallback",
+        });
+        return;
+      }
 
-    setSaveError(null);
-    try {
-      await onSave(input);
-    } catch (error) {
-      setSaveError(getErrorMessage(error, "No se pudo guardar la campaña"));
-    }
-  });
+      setValidationError(null);
+      setSaveError(null);
+      try {
+        await onSave(input);
+      } catch (error) {
+        setSaveError(getErrorMessage(error, "No se pudo guardar la campaña"));
+      }
+    },
+    () => {
+      setValidationError(
+        "Hay campos incompletos o inválidos. Revisa las secciones marcadas antes de guardar.",
+      );
+    },
+  );
 
   return (
     <FormProvider {...methods}>
@@ -124,7 +148,10 @@ export function CampaignEditor({
               spacing={2}
               alignItems={{ md: "center" }}
             >
-              <Button startIcon={<ArrowBackIcon />} onClick={closeEditor}>
+              <Button
+                startIcon={<ArrowBackIcon />}
+                onClick={() => void closeEditor()}
+              >
                 Volver
               </Button>
               <Box sx={{ flex: 1 }}>
@@ -155,6 +182,7 @@ export function CampaignEditor({
           </Paper>
 
           {saveError && <Alert severity="error">{saveError}</Alert>}
+          {validationError && <Alert severity="error">{validationError}</Alert>}
           {errors.root?.message && (
             <Alert severity="error">{errors.root.message}</Alert>
           )}

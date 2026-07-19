@@ -20,10 +20,12 @@ const requireVisibleText = (
   }
 };
 
+const displayTextSchema = z.string().trim().max(250);
+
 const visibilityTextSchema = z
   .object({
     visibility: z.boolean(),
-    text: z.string().max(250),
+    text: displayTextSchema,
   })
   .strict()
   .superRefine(requireVisibleText);
@@ -49,14 +51,14 @@ const cardSchema = z
     planTitle: z.object({ text: z.string().trim().min(1).max(120) }).strict(),
     planSubtitle: visibilityTextSchema,
     priceDiscount: visibilityTextSchema,
-    price: z.object({ text: z.string().max(50) }).strict(),
+    price: z.object({ text: z.string().trim().max(50) }).strict(),
     priceSubtitle: z
       .object({ text: z.string().trim().min(1).max(120) })
       .strict(),
     helperIconText: z
       .object({
         visibility: z.boolean(),
-        text: z.string().max(250),
+        text: displayTextSchema,
         textColor: hexColorSchema.optional(),
       })
       .strict()
@@ -69,7 +71,17 @@ const cardSchema = z
           .array(itemSchema)
           .max(5, "Una tarjeta admite como máximo 5 prestaciones"),
       })
-      .strict(),
+      .strict()
+      .superRefine((items, context) => {
+        if (items.visibility && items.itemsArray.length === 0) {
+          context.addIssue({
+            code: "custom",
+            path: ["itemsArray"],
+            message:
+              "Añade al menos una prestación cuando la lista está visible",
+          });
+        }
+      }),
     buttonText: z.object({ text: z.string().trim().min(1).max(80) }).strict(),
     footnotes: z
       .array(z.object({ text: z.string().trim().min(1).max(300) }).strict())
@@ -112,12 +124,12 @@ export const planModalTemplateSchema = z
           .object({
             visibility: z.boolean(),
             bgColor: hexColorSchema.optional(),
-            primaryText: z.string().max(250),
+            primaryText: displayTextSchema,
             primaryTextColor: hexColorSchema.optional(),
             secondaryText: z
               .object({
                 visibility: z.boolean(),
-                text: z.string().max(250),
+                text: displayTextSchema,
                 color: hexColorSchema.optional(),
               })
               .strict()
@@ -125,7 +137,7 @@ export const planModalTemplateSchema = z
             bannerChip: z
               .object({
                 visibility: z.boolean(),
-                text: z.string().max(250),
+                text: displayTextSchema,
                 bgColor: hexColorSchema.optional(),
                 textColor: hexColorSchema.optional(),
               })
@@ -161,10 +173,12 @@ export const planModalTemplateSchema = z
                       .object({ text: z.string().trim().min(1).max(250) })
                       .strict(),
                   )
+                  .min(1, "Cada columna debe incluir al menos una prestación")
                   .max(3, "Una columna admite como máximo 3 prestaciones"),
               })
               .strict(),
           )
+          .min(2, "El footer debe incluir al menos 2 columnas")
           .max(4, "El footer admite como máximo 4 columnas"),
       })
       .strict(),

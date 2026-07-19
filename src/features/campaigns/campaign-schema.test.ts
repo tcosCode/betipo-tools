@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { createCampaignDefaults } from "./campaign-defaults";
+import {
+  campaignToFormValues,
+  createCampaignDefaults,
+  formatPlanPrice,
+} from "./campaign-defaults";
 import {
   campaignWriteSchema,
   type CampaignWriteInput,
@@ -105,6 +109,86 @@ describe("campaignWriteSchema", () => {
     }
   });
 
+  it("rechaza un chip visible sin texto", () => {
+    const campaign = createValidCampaign();
+    campaign.uiTemplate.cards[0].chip = { visibility: true, text: "   " };
+
+    const result = campaignWriteSchema.safeParse(campaign);
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.issues[0].path).toEqual([
+        "uiTemplate",
+        "cards",
+        0,
+        "chip",
+        "text",
+      ]);
+    }
+  });
+
+  it("rechaza una lista visible sin prestaciones", () => {
+    const campaign = createValidCampaign();
+    campaign.uiTemplate.cards[0].items = {
+      visibility: true,
+      itemsArray: [],
+    };
+
+    const result = campaignWriteSchema.safeParse(campaign);
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.issues[0].path).toEqual([
+        "uiTemplate",
+        "cards",
+        0,
+        "items",
+        "itemsArray",
+      ]);
+    }
+  });
+
+  it("limpia espacios exteriores antes de persistir", () => {
+    const campaign = createValidCampaign();
+    campaign.nombre = "  Campaña limpia  ";
+    campaign.uiTemplate.header.banner.primaryText = "  Oferta limitada  ";
+    campaign.uiTemplate.cards[1].chip.text = "  DESTACADO  ";
+
+    const result = campaignWriteSchema.safeParse(campaign);
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.nombre).toBe("Campaña limpia");
+      expect(result.data.uiTemplate.header.banner.primaryText).toBe(
+        "Oferta limitada",
+      );
+      expect(result.data.uiTemplate.cards[1].chip.text).toBe("DESTACADO");
+    }
+  });
+
+  it("exige entre dos y cuatro columnas de footer", () => {
+    const campaign = createValidCampaign();
+    campaign.uiTemplate.footer.footerColumns = [
+      campaign.uiTemplate.footer.footerColumns[0],
+    ];
+
+    const result = campaignWriteSchema.safeParse(campaign);
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.issues[0].message).toContain("al menos 2 columnas");
+    }
+  });
+
+  it("exige al menos una prestación por columna de footer", () => {
+    const campaign = createValidCampaign();
+    campaign.uiTemplate.footer.footerColumns[0].columnItems = [];
+
+    const result = campaignWriteSchema.safeParse(campaign);
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.issues[0].message).toContain(
+        "al menos una prestación",
+      );
+    }
+  });
+
   it("rechaza propiedades desconocidas del JSON", () => {
     const campaign = createValidCampaign() as CampaignWriteInput & {
       unexpected?: boolean;
@@ -112,5 +196,34 @@ describe("campaignWriteSchema", () => {
     campaign.unexpected = true;
 
     expect(campaignWriteSchema.safeParse(campaign).success).toBe(false);
+  });
+});
+
+describe("campaign form values", () => {
+  it("normaliza el precio decimal para mostrarlo", () => {
+    expect(formatPlanPrice("29.00")).toBe("29");
+    expect(formatPlanPrice("16.50")).toBe("16,5");
+  });
+
+  it("sincroniza el precio persistido con el precio actual del plan", () => {
+    const campaign = createValidCampaign();
+    campaign.uiTemplate.cards[0].price.text = "999";
+
+    const values = campaignToFormValues(
+      {
+        ...campaign,
+        updatedAt: null,
+      },
+      [
+        {
+          uuid: PLAN_UUIDS[0],
+          nombre: "Plan mensual",
+          precio: "29.00",
+          esFreemium: false,
+        },
+      ],
+    );
+
+    expect(values.uiTemplate.cards[0].price.text).toBe("29");
   });
 });

@@ -45,3 +45,13 @@ export const saveCampaign = async (
     );
   return response.json();
 };
+
+export const archiveCampaign = async (uuid: string): Promise<void> => {
+  const response = await fetch(`/api/campannas/${uuid}?env=dev`, {
+    method: "DELETE",
+  });
+  if (!response.ok)
+    throw new Error(
+      await getResponseError(response, "Error al eliminar campaña"),
+    );
+};
