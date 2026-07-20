@@ -12,7 +12,7 @@ export default function DashboardTabs() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="overflow-x-auto border-b border-slate-200">
+      <div className="overflow-x-auto overflow-y-hidden border-b border-slate-200">
         <nav className="-mb-px flex min-w-max gap-6" aria-label="Tabs">
           <button
             onClick={() => setActiveTab("formaciones")}
