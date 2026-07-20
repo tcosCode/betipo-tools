@@ -132,10 +132,12 @@ export const startSignIn = async (
 
 export const completeSignIn = async (
   cookies: AstroCookies,
-  callbackUrl: string,
+  callbackUrl: URL,
 ): Promise<void> => {
-  const { client } = createLogtoClient(cookies);
-  await client.handleSignInCallback(callbackUrl);
+  const { client, settings } = createLogtoClient(cookies);
+  const publicCallbackUrl = new URL(`${settings.baseUrl}/callback`);
+  publicCallbackUrl.search = callbackUrl.search;
+  await client.handleSignInCallback(publicCallbackUrl.toString());
 };
 
 // Devuelve la URL de cierre de sesión de Logto (o un fallback local).
