@@ -11,10 +11,19 @@
 
 ## App Shape
 
-- This is an Astro SSR app (`output: "server"`) deployed through the Netlify adapter with edge middleware enabled; Netlify builds with `npm run build` and publishes `dist`.
+- This is an Astro SSR app (`output: "server"`) deployed on a VPS with Dokploy using the `@astrojs/node` adapter in `standalone` mode; the `Dockerfile` builds with `npm run build` and runs `dist/server/entry.mjs`.
 - The page entrypoint is `src/pages/index.astro`, which hydrates the React dashboard via `DashboardTabs client:load`.
 - API routes live under `src/pages/api/**`; they are not prerendered and query Postgres directly through `src/lib/db.ts`.
 - The dashboard manages two database environments via `?env=dev|prod`; omitted `env` defaults to `dev`, and invalid values return 400.
+
+## Auth (Logto)
+
+- Authentication uses a self-hosted Logto (OIDC, "Traditional web" application) via `@logto/node`; there is no Astro SDK, so the integration lives in `src/lib/logto.ts`.
+- `src/middleware.ts` hydrates the session on every request (except static assets) and exposes `locals.auth()` (`{ userId }`) and `locals.user` (`{ name, picture } | null`); `src/env.d.ts` declares these `App.Locals` types. Pages/API routes keep using `locals.auth()` for authorization.
+- Session persistence: Logto tokens are stored in encrypted (AES-256-GCM) httpOnly cookies by `src/lib/logto-session.ts`; expired tokens are refreshed transparently in `getAuthSession`.
+- Auth routes are endpoints (not pages): `src/pages/sign-in.ts` redirects to Logto, `src/pages/callback.ts` handles the OIDC callback, `src/pages/sign-out.ts` signs out via Logto. The redirect URI `<base>/callback` and post-logout `<base>` must be registered in the Logto Console.
+- Required env vars (read lazily with `astro:env/server` in `src/lib/logto.ts`): `LOGTO_ENDPOINT`, `LOGTO_APP_ID`, `LOGTO_APP_SECRET`, `LOGTO_BASE_URL` (public URL of this app, used for redirect URIs and cookie `secure` flag), and `LOGTO_COOKIE_SECRET` (cookie encryption key).
+- Invitation-only registration is handled by the independent Node service in `services/logto-invitations`; it uses a Logto M2M app plus Resend, and sends links to the public `src/pages/invitacion.ts` landing page. The main dashboard does not expose invitation administration.
 
 ## Data And Env
 
@@ -25,7 +34,8 @@
 ## Testing Notes
 
 - Tests are Vitest unit tests colocated in `src/**/*.test.ts`; there is no Vitest config file.
-- Current tests cover env parsing, input validation, and date conversion. Add focused unit coverage there when changing those utilities or schemas.
+- Current tests cover env parsing, input validation, date conversion, and the Logto cookie session layer (`src/lib/logto-session.test.ts`). Add focused unit coverage there when changing those utilities or schemas.
+- `src/lib/logto-session.ts` is deliberately free of `astro:env` imports so it stays unit-testable; keep crypto/storage logic there and env-dependent wiring in `src/lib/logto.ts`.
 
 ## API Route Conventions
 

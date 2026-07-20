@@ -1,6 +1,7 @@
 ---
 import "../styles/global.css";
-import { Show, UserButton, SignInButton } from "@clerk/astro/components";
+
+const user = Astro.locals.user;
 ---
 
 <!doctype html>
@@ -15,12 +16,38 @@ import { Show, UserButton, SignInButton } from "@clerk/astro/components";
 
   <body class="min-h-screen bg-slate-100 text-slate-800 antialiased">
     <div class="flex justify-end px-4 py-3">
-      <Show when="signed-out">
-        <SignInButton mode="modal" />
-      </Show>
-      <Show when="signed-in">
-        <UserButton />
-      </Show>
+      {
+        user ? (
+          <div class="flex items-center gap-3">
+            {user.picture && (
+              <img
+                src={user.picture}
+                alt=""
+                referrerpolicy="no-referrer"
+                class="h-8 w-8 rounded-full"
+              />
+            )}
+            {user.name && (
+              <span class="text-sm font-medium text-slate-600">
+                {user.name}
+              </span>
+            )}
+            <a
+              href="/sign-out"
+              class="rounded-md bg-white px-3 py-1.5 text-sm font-medium text-slate-700 shadow-sm ring-1 ring-slate-200 hover:bg-slate-50"
+            >
+              Cerrar sesión
+            </a>
+          </div>
+        ) : (
+          <a
+            href="/sign-in"
+            class="rounded-md bg-slate-800 px-3 py-1.5 text-sm font-medium text-white shadow-sm hover:bg-slate-700"
+          >
+            Iniciar sesión
+          </a>
+        )
+      }
     </div>
     <slot />
   </body>
