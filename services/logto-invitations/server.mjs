@@ -33,7 +33,8 @@ const securityHeaders = {
   "Cache-Control": "no-store",
   "Content-Security-Policy":
     "default-src 'none'; style-src 'unsafe-inline'; form-action 'self'; base-uri 'none'; frame-ancestors 'none'",
-  "Referrer-Policy": "no-referrer",
+  "Referrer-Policy": "same-origin",
+  Vary: "Sec-Fetch-Site, Origin",
   "X-Content-Type-Options": "nosniff",
   "X-Frame-Options": "DENY",
 };
@@ -326,8 +327,7 @@ const handleRequest = async (request, response) => {
       console.warn("Rejected invitation request origin", {
         origin: request.headers.origin,
         referer: request.headers.referer,
-        forwardedHost: request.headers["x-forwarded-host"],
-        forwardedProto: request.headers["x-forwarded-proto"],
+        fetchSite: request.headers["sec-fetch-site"],
       });
       return send(response, 403, "Invalid request origin", {
         "Content-Type": "text/plain; charset=utf-8",
