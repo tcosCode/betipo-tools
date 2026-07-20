@@ -4,8 +4,8 @@ WORKDIR /app
 ENV NODE_ENV=production
 ENV PORT=3000
 
-COPY services/logto-invitations/lib.mjs ./lib.mjs
-COPY services/logto-invitations/server.mjs ./server.mjs
+COPY lib.mjs ./lib.mjs
+COPY server.mjs ./server.mjs
 
 USER node
 EXPOSE 3000
