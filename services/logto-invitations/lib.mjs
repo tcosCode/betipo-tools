@@ -13,6 +13,40 @@ export const requireEnv = (name, env = process.env) => {
 
 export const normalizeOrigin = (value) => value.replace(/\/+$/, "");
 
+const firstHeaderValue = (value) => {
+  const header = Array.isArray(value) ? value[0] : value;
+  return header?.split(",")[0]?.trim();
+};
+
+export const isTrustedRequestOrigin = (headers, configuredOrigin) => {
+  const origin = firstHeaderValue(headers.origin);
+  let requestOrigin = origin;
+
+  if (!requestOrigin) {
+    const referer = firstHeaderValue(headers.referer);
+    if (referer) {
+      try {
+        requestOrigin = new URL(referer).origin;
+      } catch {
+        return false;
+      }
+    }
+  }
+
+  if (!requestOrigin) return false;
+
+  const protocol = firstHeaderValue(headers["x-forwarded-proto"]);
+  const host =
+    firstHeaderValue(headers["x-forwarded-host"]) ||
+    firstHeaderValue(headers.host);
+  const forwardedOrigin =
+    protocol && host ? `${protocol}://${host}` : undefined;
+
+  return (
+    requestOrigin === configuredOrigin || requestOrigin === forwardedOrigin
+  );
+};
+
 export const isValidEmail = (value) =>
   /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value) && value.length <= 128;
 

@@ -4,6 +4,7 @@ import {
   buildInvitationUrl,
   escapeHtml,
   hasValidBasicAuth,
+  isTrustedRequestOrigin,
   isValidEmail,
 } from "./lib.mjs";
 
@@ -40,5 +41,40 @@ describe("invitation service helpers", () => {
     expect(hasValidBasicAuth(value, "admin", "secret:with-colon")).toBe(true);
     expect(hasValidBasicAuth(value, "admin", "wrong")).toBe(false);
     expect(hasValidBasicAuth(undefined, "admin", "secret")).toBe(false);
+  });
+
+  it("accepts the configured origin", () => {
+    expect(
+      isTrustedRequestOrigin(
+        { origin: "https://invites.example.com" },
+        "https://invites.example.com",
+      ),
+    ).toBe(true);
+  });
+
+  it("accepts the effective origin forwarded by Traefik", () => {
+    expect(
+      isTrustedRequestOrigin(
+        {
+          origin: "https://invites.example.com",
+          "x-forwarded-proto": "https",
+          "x-forwarded-host": "invites.example.com",
+        },
+        "https://internal.example.com",
+      ),
+    ).toBe(true);
+  });
+
+  it("rejects cross-origin form submissions", () => {
+    expect(
+      isTrustedRequestOrigin(
+        {
+          origin: "https://attacker.example",
+          "x-forwarded-proto": "https",
+          "x-forwarded-host": "invites.example.com",
+        },
+        "https://invites.example.com",
+      ),
+    ).toBe(false);
   });
 });
