@@ -6,6 +6,7 @@ import {
   escapeHtml,
   hasValidBasicAuth,
   invitationEmail,
+  isTrustedRequestOrigin,
   isValidEmail,
   MANAGEMENT_API_INDICATOR,
   normalizeOrigin,
@@ -202,19 +203,6 @@ const readForm = async (request) => {
   return new URLSearchParams(body);
 };
 
-const hasTrustedOrigin = (request) => {
-  const origin = request.headers.origin;
-  if (origin) return origin === config.adminOrigin;
-
-  const referer = request.headers.referer;
-  if (!referer) return false;
-  try {
-    return new URL(referer).origin === config.adminOrigin;
-  } catch {
-    return false;
-  }
-};
-
 const formatDate = (value) => {
   const date = new Date(value);
   return Number.isNaN(date.getTime())
@@ -334,7 +322,13 @@ const handleRequest = async (request, response) => {
   }
 
   if (request.method === "POST") {
-    if (!hasTrustedOrigin(request)) {
+    if (!isTrustedRequestOrigin(request.headers, config.adminOrigin)) {
+      console.warn("Rejected invitation request origin", {
+        origin: request.headers.origin,
+        referer: request.headers.referer,
+        forwardedHost: request.headers["x-forwarded-host"],
+        forwardedProto: request.headers["x-forwarded-proto"],
+      });
       return send(response, 403, "Invalid request origin", {
         "Content-Type": "text/plain; charset=utf-8",
       });
