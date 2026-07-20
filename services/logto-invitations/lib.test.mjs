@@ -52,15 +52,14 @@ describe("invitation service helpers", () => {
     ).toBe(true);
   });
 
-  it("accepts the effective origin forwarded by Traefik", () => {
+  it("accepts a same-origin form post with a null Origin header", () => {
     expect(
       isTrustedRequestOrigin(
         {
-          origin: "https://invites.example.com",
-          "x-forwarded-proto": "https",
-          "x-forwarded-host": "invites.example.com",
+          origin: "null",
+          "sec-fetch-site": "same-origin",
         },
-        "https://internal.example.com",
+        "https://invites.example.com",
       ),
     ).toBe(true);
   });
@@ -70,11 +69,37 @@ describe("invitation service helpers", () => {
       isTrustedRequestOrigin(
         {
           origin: "https://attacker.example",
-          "x-forwarded-proto": "https",
-          "x-forwarded-host": "invites.example.com",
+          "sec-fetch-site": "cross-site",
         },
         "https://invites.example.com",
       ),
+    ).toBe(false);
+  });
+
+  it("falls back to Origin when Fetch Metadata is absent", () => {
+    expect(
+      isTrustedRequestOrigin(
+        { origin: "https://invites.example.com" },
+        "https://invites.example.com",
+      ),
+    ).toBe(true);
+  });
+
+  it("falls back to Referer when Origin is null", () => {
+    expect(
+      isTrustedRequestOrigin(
+        {
+          origin: "null",
+          referer: "https://invites.example.com/",
+        },
+        "https://invites.example.com",
+      ),
+    ).toBe(true);
+  });
+
+  it("rejects a null Origin without Fetch Metadata or Referer", () => {
+    expect(
+      isTrustedRequestOrigin({ origin: "null" }, "https://invites.example.com"),
     ).toBe(false);
   });
 });

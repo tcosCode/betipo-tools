@@ -19,32 +19,30 @@ const firstHeaderValue = (value) => {
 };
 
 export const isTrustedRequestOrigin = (headers, configuredOrigin) => {
-  const origin = firstHeaderValue(headers.origin);
-  let requestOrigin = origin;
+  const fetchSite = firstHeaderValue(headers["sec-fetch-site"]);
+  const knownFetchSites = new Set([
+    "same-origin",
+    "same-site",
+    "cross-site",
+    "none",
+  ]);
 
-  if (!requestOrigin) {
-    const referer = firstHeaderValue(headers.referer);
-    if (referer) {
-      try {
-        requestOrigin = new URL(referer).origin;
-      } catch {
-        return false;
-      }
-    }
+  if (fetchSite && knownFetchSites.has(fetchSite)) {
+    return fetchSite === "same-origin";
   }
 
-  if (!requestOrigin) return false;
+  const origin = firstHeaderValue(headers.origin);
+  if (origin && origin !== "null") {
+    return origin === configuredOrigin;
+  }
 
-  const protocol = firstHeaderValue(headers["x-forwarded-proto"]);
-  const host =
-    firstHeaderValue(headers["x-forwarded-host"]) ||
-    firstHeaderValue(headers.host);
-  const forwardedOrigin =
-    protocol && host ? `${protocol}://${host}` : undefined;
-
-  return (
-    requestOrigin === configuredOrigin || requestOrigin === forwardedOrigin
-  );
+  const referer = firstHeaderValue(headers.referer);
+  if (!referer) return false;
+  try {
+    return new URL(referer).origin === configuredOrigin;
+  } catch {
+    return false;
+  }
 };
 
 export const isValidEmail = (value) =>
